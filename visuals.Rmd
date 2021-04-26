@@ -1,0 +1,133 @@
+---
+title: "Diamond Visualizations"
+output: html_notebook
+---
+note:
+* eliminate graphs
+* add narratives
+* add titles & labs; clean xlim
+
+```{r message=FALSE, warning=FALSE}
+library(corrplot)
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(lattice)
+library(grid)
+library(gridExtra)
+```
+
+```{r message=FALSE, warning=FALSE}
+attach(diamonds)
+diamonds <- data.table(diamonds)
+```
+
+```{r}
+summary(diamonds)
+```
+
+Categorical variables:  cut(Fair, Good, Very Good, Premium, Ideal), color(D,E,F,G,H,I,J), clarity(I1 < SI2 < SI1 < VS2 < VS1 < VVS2 < VVS1 < IF)
+
+Quantitative variables: carat, depth, table, price, x, y, z
+
+```{r}
+#bar charts for categorical variables
+ggplot(diamonds,aes(cut))+geom_bar(fill='dark blue')
+ggplot(diamonds,aes(color))+geom_bar(fill='dark blue')
+ggplot(diamonds,aes(clarity))+geom_bar(fill='dark blue')
+```
+
+
+```{r}
+ggplot(diamonds) +
+  geom_bar(aes(x=cut, fill=clarity),
+           position = "dodge") +
+  facet_wrap(~color)
+```
+
+
+```{r}
+hist(diamonds$price, main = "Distribution of Price variable", col = "darkblue")
+```
+
+```{r}
+ggplot(diamonds, aes(x=price, fill=cut)) + geom_histogram()
+```
+
+```{r}
+num <- diamonds%>% select(carat, depth,table,price,x,y,z)
+corrplot(cor(num),"number","upper")
+```
+
+```{r}
+g1 <- ggplot(diamonds,aes(x=cut)) + geom_bar(aes(fill=clarity))
+g2<- ggplot(diamonds,aes(x=cut)) + geom_bar(aes(fill=color))
+grid.arrange(g1,g2, ncol = 2)
+```
+
+```{r}
+a <- ggplot(data = diamonds)+
+  geom_bar(aes(x=cut,y=price),stat = "summary",alpha=1,fill="blue")+
+  xlab("Cut Type")+
+  ylab("Average Price")+
+  ggtitle("Cut vs Price")
+
+# Plotting color vs price
+b <- ggplot(data = diamonds)+
+  geom_bar(aes(x=color,y=price),stat = "summary",fun="mean",alpha=1,fill="red")+
+  xlab("Color")+
+  ylab("Average Price")+
+  ggtitle("Color vs Price")
+
+# Plotting clarity vs price
+c<- ggplot(data = diamonds)+
+  geom_bar(aes(x=clarity,y=price),stat = "summary",alpha=1,fill="green")+
+  xlab("Clarity Type")+
+  ylab("Average Price")+
+  ggtitle("Clarity vs Price")
+
+d <- ggplot(data = diamonds)+
+  geom_bar(aes(x=carat,y=price),stat = "summary",alpha=1,fill="orange")+
+  xlab("Carat")+
+  ylab("Average Price")+
+  ggtitle("Carat vs Price")
+
+# Plotting depth vs price
+e <- ggplot(data = diamonds)+
+  geom_bar(aes(x=depth,y=price),stat = "summary",alpha=1,fill="pink")+
+  xlab("Depth")+
+  ylab("Average Price")+
+  ggtitle("Depth vs Price")
+
+# Plotting table vs price
+f <- ggplot(data = diamonds)+
+  geom_bar(aes(x=table,y=price),stat = "summary",alpha=1,fill="purple")+
+  xlab("Table")+
+  ylab("Average Price")+
+  ggtitle("Table vs Price")
+
+g <- ggplot(data = diamonds)+
+  geom_bar(aes(x=x,y=price),stat = "summary",alpha=1,fill="purple")+
+  xlab("X")+
+  ylab("Average Price")+
+  ggtitle("X vs Price")
+
+# Plotting Y vs price
+h <- ggplot(data = diamonds)+
+  geom_bar(aes(x=y,y=price),stat = "summary",alpha=1,fill="purple")+
+  xlab("Y")+
+  ylab("Average Price")+
+  ggtitle("Y vs Price")
+
+# Plotting Z vs price
+i <- ggplot(data = diamonds)+
+  geom_bar(aes(x=z,y=price),stat="summary",alpha=1,fill="purple")+
+  xlab("Z")+
+  ylab("Average Price")+
+  ggtitle("Z vs Price")
+
+# Arrange each plots in grid
+
+grid.arrange(a, b, c,d,e,f,g,h,i, ncol = 3, nrow = 3)
+```
+
