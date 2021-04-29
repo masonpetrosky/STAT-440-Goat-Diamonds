@@ -1,0 +1,418 @@
+---
+header-includes:
+  - \usepackage{placeins}
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::knit_hooks$set(plot = function (x, options) {
+  float_correct <- function(f, y, opts)  {
+    if (is.null(opts$regfloat) || opts$regfloat==FALSE)
+      paste0(f(y, opts), "\n\n\\FloatBarrier\n")
+    else
+      f(y, opts)
+  }
+  if (!is.null(options$out.width) || !is.null(options$out.height) ||
+      !is.null(options$out.extra) || options$fig.align != "default" ||
+      !is.null(options$fig.subcap)) {
+    if (is.null(options$fig.scap))
+      options$fig.scap = NA
+    return(float_correct(knitr:::hook_plot_tex, x, options))
+  }
+  return(float_correct(knitr:::hook_plot_md_base, x, options))
+})
+```
+
+
+
+```{r,warning=FALSE,message=FALSE, include=FALSE}
+library(data.table)
+library(tidyverse)
+library(rmarkdown)
+library(ggplot2)
+library(plyr)
+library(lsmeans)
+library(multcompView)
+library(lmtest)
+library(nortest)
+library(MASS)
+library(olsrr)
+library(nortest)
+library(lsmeans)
+library(car)
+library(multcompView)
+library(lme4)
+library(lmerTest)
+library(text2vec)
+library(pdist)
+library(olsrr)
+library(MASS)
+library(dplyr)
+library(tibble)
+library(jmuOutlier)
+library(Epi)
+library(geosphere)
+library(bit64)
+options(scipen = 999)
+```
+
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE}
+attach(diamonds)
+```
+
+
+# Statistical Analysis  
+
+## Permutation test for Correlation between Diamond Prices and each of its physical characteristics  
+
+### Methodology  
+
+Before we delve into finding the best model to utilize in its prediction of diamond prices, we would first like to explore if each of the individual characteristics of length (x), width (y), z (depth), carat, relative depth and table. 
+
+Thus, we shall test for the following:  
+\[H_0:\rho=0\]  
+
+\[H_A=\rho\neq0\]  
+
+
+We would use the permutation method with $K=1000$ random permuations to test our hypothesis.  
+
+### Results  
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE}
+diamonds<-diamonds[complete.cases(diamonds), ]
+
+x=diamonds$x
+y=diamonds$y
+z=diamonds$z
+carat=diamonds$carat
+depth=diamonds$depth
+tabl=diamonds$table
+price=diamonds$price
+
+```
+
+#### Price and x  
+
+The correlation plot between price and length (x) could be best illustrated as such:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:cor1} correlation between length and diamond prices",regfloat=FALSE}
+plot(diamonds$x, diamonds$price, xlab="length", ylab="price")
+```
+
+
+The results from permutation testing of $H_0$ could be illustrated in the histogram below:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:Hist1} Results of permutation test",regfloat=FALSE}
+c=cor(price,x,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(x) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+# mean(T_perm>=c)
+```
+
+As evident from our histogram, we obtain $p-value=0$ and could conclude that we have very strong evidence at $\alpha=0.05$ to suggest that there is indeed a correlation between the prices of diamonds and its length.  
+
+
+#### Price and width (y)    
+
+The correlation plot between price and width (y) could be best illustrated as such:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:cor2} correlation between width and diamond prices",regfloat=FALSE}
+plot(diamonds$y, diamonds$price, xlab="width", ylab="price")
+```
+
+The results from permutation testing of $H_0$ could be illustrated in the histogram below:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:Hist2} Results of permutation test",regfloat=FALSE}
+c=cor(price,y,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(y)
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+#mean(T_perm>=c)
+```
+As evident from our histogram, we obtain $p-value=0$ and could conclude that we have very strong evidence at $\alpha=0.05$ to suggest that there is indeed a correlation between the prices of diamonds and its width.  
+
+
+
+
+#### price and depth (Z)    
+
+The correlation plot between price and depth (z) could be best illustrated as such:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:cor3} correlation between absolute depth and diamond prices",regfloat=FALSE}
+plot(diamonds$z, diamonds$price, xlab="depth", ylab="price")
+```
+
+The results from permutation testing of $H_0$ could be illustrated in the histogram below:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:Hist3} Results of permutation test",regfloat=FALSE}
+c=cor(price,z,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(z) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+#mean(T_perm>=c)
+```
+
+
+As evident from our histogram, we obtain $p-value=0$ and could conclude that we have very strong evidence at $\alpha=0.05$ to suggest that there is indeed a correlation between the prices of diamonds and its depth.    
+
+
+#### price and carat  
+
+The correlation plot between price and carat could be best illustrated as such:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:cor4} correlation between carat and diamond prices",regfloat=FALSE}
+plot(diamonds$carat, diamonds$price, xlab="carat", ylab="price")
+```
+
+The results from permutation testing of $H_0$ could be illustrated in the histogram below:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, , fig.cap="\\label{fig:Hist4} Results of permutation test",regfloat=FALSE}
+c=cor(price,carat,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(carat) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+# mean(T_perm>=c)
+```
+
+As evident from our histogram, we obtain $p-value=0$ and could conclude that we have very strong evidence at $\alpha=0.05$ to suggest that there is indeed a correlation between the prices of diamonds and its carat value.  
+
+
+
+
+#### price and relative depth  
+
+The correlation plot between price and relative depth could be best illustrated as such:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:cor5} correlation between relative depth and diamond prices",regfloat=FALSE}
+plot(diamonds$depth, diamonds$price, xlab="depth", ylab="price")
+```
+
+The results from permutation testing of $H_0$ could be illustrated in the histogram below:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:Hist5} Results of permutation test",regfloat=FALSE}
+c=cor(price,depth,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(depth) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+# mean(T_perm>=c)
+```
+
+As evident from our histogram, we obtain $p-value=0.991$ and could conclude that we do not have evidence at $\alpha=0.05$ to suggest that there is indeed a correlation between the prices of diamonds and its relative depth.  
+
+
+
+
+#### price and table   
+
+The correlation plot between price and table could be best illustrated as such:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:cor6} correlation between table and diamond prices",regfloat=FALSE}
+plot(diamonds$table, diamonds$price,  xlab="depth", ylab="price")
+```
+
+
+The results from permutation testing of $H_0$ could be illustrated in the histogram below:
+
+```{r,warning=FALSE,message=FALSE, echo=FALSE, fig.cap="\\label{fig:Hist6} Results of permutation test",regfloat=FALSE}
+c=cor(price,table,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(table) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+# mean(T_perm>=c)
+```
+
+As evident from our histogram, we obtain $p-value=0$ and could conclude that we have very strong evidence at $\alpha=0.05$ to suggest that there is indeed a correlation between the prices of diamonds and its table value.  
+
+
+
+
+
+# Interpretation.  
+
+## correlation between diamond prices and each of its physical characteristics   
+
+
+We have very strong evidence to suggest that there is a significant correlation between the prices of diamonds and length, width, depth, table and carat. However, we do not have evidence to suggest any correlation between prices of diamonds and its depth percentage. 
+
+# Appendix   
+
+
+## Permutation test for correlation  
+
+
+```{r}
+diamonds<-diamonds[complete.cases(diamonds), ]
+
+x=diamonds$x
+y=diamonds$y
+z=diamonds$z
+carat=diamonds$carat
+depth=diamonds$depth
+tabl=diamonds$table
+price=diamonds$price
+
+```
+
+### Price and length (x)  
+
+```{r}
+plot(diamonds$x, diamonds$price, xlab="length", ylab="price")
+c=cor(price,x,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(x) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+mean(T_perm>=c)
+```
+
+
+
+### Price and width (y)  
+
+```{r}
+plot(diamonds$y, diamonds$price, xlab="width", ylab="price")
+c=cor(price,y,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(y)
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+mean(T_perm>=c)
+```
+
+
+### price and depth (Z)    
+
+```{r}
+plot(diamonds$z, diamonds$price, xlab="depth", ylab="price")
+c=cor(price,z,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(z) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+mean(T_perm>=c)
+```
+
+### price and carat  
+
+```{r}
+plot(diamonds$carat, diamonds$price, xlab="carat", ylab="price")
+c=cor(price,carat,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(carat) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+mean(T_perm>=c)
+```
+
+
+
+### price and relative depth  
+
+```{r}
+plot(diamonds$depth, diamonds$price, xlab="depth", ylab="price")
+c=cor(price,depth,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(depth) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+mean(T_perm>=c)
+```
+
+
+
+### price and table    
+
+```{r}
+plot(diamonds$table, diamonds$price,  xlab="depth", ylab="price")
+c=cor(price,table,method = "pearson")
+num_perm<-1000
+T_perm<-numeric(num_perm)
+for(i in 1:num_perm){
+  x_tmp<-sample(table) # replace=F, size=length(BMI) by default
+  y_tmp<-sample(price)
+  T_perm[i]<-cor(x_tmp,y_tmp)
+}
+
+hist(T_perm, xlim=c(-1,1))
+abline(v=c, col="red", lwd=3)
+mean(T_perm>=c)
+```
